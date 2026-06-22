@@ -1,17 +1,19 @@
 import {
-  type ProductStatus,
-  parseProductStatus,
+  type ProductDevelopmentStatus,
+  parseProductDevelopmentStatus,
 } from "./status";
 
 export type ReadinessCheckKey =
-  | "title"
-  | "vendor"
-  | "productType"
-  | "description"
+  | "name"
+  | "collectionSeason"
+  | "category"
+  | "owner"
+  | "supplier"
   | "variants"
-  | "variantSkus"
-  | "variantPrices"
-  | "media"
+  | "costing"
+  | "sample"
+  | "creativeApproval"
+  | "commercialApproval"
   | "workflowStatus";
 
 export type ReadinessCheck = {
@@ -23,38 +25,48 @@ export type ReadinessCheck = {
 };
 
 export type ReadinessVariantInput = {
-  sku?: string | null;
-  priceCents?: number | null;
+  color?: string | null;
+  size?: string | null;
 };
 
-export type ReadinessMediaInput = {
-  url?: string | null;
-  alt?: string | null;
+export type ReadinessCostingInput = {
+  purchaseCostCents?: number | null;
+  landedCostCents?: number | null;
+  retailPriceCents?: number | null;
 };
 
-export type ReadinessProductInput = {
+export type ReadinessApprovalInput = {
+  type: "CREATIVE" | "COMMERCIAL";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "WAIVED";
+};
+
+export type DevelopmentProductReadinessInput = {
   title?: string | null;
-  vendor?: string | null;
-  productType?: string | null;
-  descriptionHtml?: string | null;
-  status?: ProductStatus | string | null;
+  workingName?: string | null;
+  collectionSeasonId?: string | null;
+  category?: string | null;
+  ownerId?: string | null;
+  supplierId?: string | null;
+  status?: ProductDevelopmentStatus | string | null;
   variants?: ReadinessVariantInput[];
-  media?: ReadinessMediaInput[];
+  costing?: ReadinessCostingInput | null;
+  sampleCount?: number | null;
+  approvals?: ReadinessApprovalInput[];
 };
 
 export type ReadinessResult = {
   score: number;
   checks: ReadinessCheck[];
   blockingReasons: string[];
-  canEnterReview: boolean;
-  recommendedStatus: ProductStatus;
+  canApproveForLaunch: boolean;
+  recommendedStatus: ProductDevelopmentStatus;
 };
 
 function hasText(value: string | null | undefined): boolean {
   return Boolean(value?.trim());
 }
 
-function hasPositivePrice(value: number | null | undefined): boolean {
+function hasPositiveAmount(value: number | null | undefined): boolean {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
@@ -74,57 +86,81 @@ function check(
 }
 
 export function evaluateProductReadiness(
-  product: ReadinessProductInput,
+  product: DevelopmentProductReadinessInput,
 ): ReadinessResult {
-  const status = parseProductStatus(product.status);
+  const status = parseProductDevelopmentStatus(product.status);
   const variants = product.variants ?? [];
-  const media = product.media ?? [];
+  const approvals = product.approvals ?? [];
+  const hasApproval = (type: ReadinessApprovalInput["type"]) =>
+    approvals.some(
+      (approval) =>
+        approval.type === type &&
+        (approval.status === "APPROVED" || approval.status === "WAIVED"),
+    );
 
   const checks: ReadinessCheck[] = [
-    check("title", "Title", hasText(product.title), "Add a product title."),
-    check("vendor", "Vendor", hasText(product.vendor), "Add a vendor."),
     check(
-      "productType",
-      "Product type",
-      hasText(product.productType),
-      "Add a product type.",
+      "name",
+      "Name",
+      hasText(product.title) || hasText(product.workingName),
+      "Add a product title or working name.",
     ),
     check(
-      "description",
-      "Description",
-      hasText(product.descriptionHtml),
-      "Add a product description.",
+      "collectionSeason",
+      "Collection or season",
+      hasText(product.collectionSeasonId),
+      "Assign a collection or season.",
+    ),
+    check("category", "Category", hasText(product.category), "Add a category."),
+    check("owner", "Owner", hasText(product.ownerId), "Assign an owner."),
+    check(
+      "supplier",
+      "Supplier",
+      hasText(product.supplierId),
+      "Assign a supplier.",
     ),
     check(
       "variants",
       "Variants",
-      variants.length > 0,
-      "Add at least one variant.",
-    ),
-    check(
-      "variantSkus",
-      "Variant SKUs",
-      variants.length > 0 && variants.every((variant) => hasText(variant.sku)),
-      "Add SKUs to every variant.",
-    ),
-    check(
-      "variantPrices",
-      "Variant prices",
       variants.length > 0 &&
-        variants.every((variant) => hasPositivePrice(variant.priceCents)),
-      "Add prices to every variant.",
+        variants.every(
+          (variant) => hasText(variant.color) && hasText(variant.size),
+        ),
+      "Add at least one variant with color and size.",
     ),
     check(
-      "media",
-      "Media",
-      media.some((item) => hasText(item.url)),
-      "Add at least one product media item.",
+      "costing",
+      "Costing",
+      Boolean(
+        product.costing &&
+          hasPositiveAmount(product.costing.purchaseCostCents) &&
+          hasPositiveAmount(product.costing.retailPriceCents),
+      ),
+      "Add purchase cost and retail price.",
+    ),
+    check(
+      "sample",
+      "Sample",
+      (product.sampleCount ?? 0) > 0,
+      "Record at least one sample round.",
+    ),
+    check(
+      "creativeApproval",
+      "Creative approval",
+      hasApproval("CREATIVE"),
+      "Capture creative approval.",
+    ),
+    check(
+      "commercialApproval",
+      "Commercial approval",
+      hasApproval("COMMERCIAL"),
+      "Capture commercial approval.",
     ),
     check(
       "workflowStatus",
       "Workflow status",
-      status !== "BLOCKED" && status !== "ARCHIVED",
-      "Move the product out of blocked or archived status.",
+      status !== "DROPPED",
+      "Move the product out of dropped status.",
     ),
   ];
 
@@ -132,21 +168,23 @@ export function evaluateProductReadiness(
   const blockingReasons = checks
     .filter((item) => item.blocking && !item.passed)
     .map((item) => item.message ?? item.label);
-  const canEnterReview = blockingReasons.length === 0;
+  const canApproveForLaunch = blockingReasons.length === 0;
 
-  let recommendedStatus: ProductStatus = "NEEDS_CONTENT";
+  let recommendedStatus: ProductDevelopmentStatus = "IN_DEVELOPMENT";
 
-  if (status === "BLOCKED" || status === "ARCHIVED" || status === "APPROVED") {
+  if (status === "DROPPED" || status === "SYNCED_TO_SHOPIFY") {
     recommendedStatus = status;
-  } else if (canEnterReview) {
-    recommendedStatus = "READY_FOR_REVIEW";
+  } else if (canApproveForLaunch) {
+    recommendedStatus = "APPROVED_FOR_LAUNCH";
+  } else if (status === "REVIEW" || status === "APPROVED_FOR_LAUNCH") {
+    recommendedStatus = "REVIEW";
   }
 
   return {
     score: Math.round((passedCount / checks.length) * 100),
     checks,
     blockingReasons,
-    canEnterReview,
+    canApproveForLaunch,
     recommendedStatus,
   };
 }

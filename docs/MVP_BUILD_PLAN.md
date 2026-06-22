@@ -2,15 +2,15 @@
 
 ## Principle
 
-Build the PLM in small, reviewable slices. The MVP should make imported product data easier to assess and approve before any Shopify write-sync exists.
+Build the PLM in small, reviewable slices. MVP 0 is an internal product development workspace. Shopify write-sync comes later, after the local workflow is useful.
 
 ## Slice 1: Repository Foundation
 
 - Add project metadata, ignore rules, architecture notes, and MVP plan.
-- Define the product lifecycle status vocabulary.
-- Define deterministic readiness checks for product content quality.
+- Define the product development status vocabulary from the handoff.
+- Define deterministic launch readiness checks for development products.
 - Define read-oriented Shopify scopes and app-level role permissions.
-- Add the initial Prisma schema for Shopify sessions, local products, variants, and media.
+- Add the initial Prisma schema for MVP 0 domain models at a draft level.
 
 ## Slice 2: Shopify App Shell
 
@@ -19,25 +19,26 @@ Build the PLM in small, reviewable slices. The MVP should make imported product 
 - Add protected routes and basic app navigation.
 - Keep requested Shopify scopes read-only.
 
-## Slice 3: Product Import Read Model
+## Slice 3: Development Product Workspace
 
-- Fetch products from Shopify using read scopes.
-- Upsert imported products, variants, and media into local tables.
-- Record import timestamps and source identifiers.
-- Do not write product changes back to Shopify.
+- Create and edit development products locally.
+- Assign collection or season, category, owner, and supplier.
+- Add variants with color and size.
+- Track local product status through idea, development, review, and launch approval.
 
-## Slice 4: PLM Workspace
+## Slice 4: Samples, Costing, and Decisions
 
-- List local products with status, readiness score, and last-import time.
-- Add product detail pages for reviewing content, variants, and media.
-- Allow local status changes such as blocked, ready for review, approved, and archived.
-- Preserve Shopify source data separately from local review decisions.
+- Add simple costing and margin fields.
+- Record supplier basics and private supplier notes locally.
+- Track sample rounds and fit comments.
+- Capture product decisions and activity history.
 
 ## Slice 5: Readiness Workflow
 
-- Run readiness checks whenever a product is imported or edited locally.
+- Run readiness checks whenever a development product changes.
 - Show blocking readiness reasons in the product workspace.
-- Let reviewers approve only products that satisfy the readiness checks.
+- Track creative and commercial approvals.
+- Let reviewers approve for launch only when readiness checks pass.
 - Track who approved a product and when.
 
 ## Post-MVP: Shopify Write-Sync

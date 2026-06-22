@@ -9,7 +9,13 @@ export type AppRole = "owner" | "editor" | "viewer";
 
 export type AppPermission =
   | "products:read"
-  | "products:updateLocalState"
+  | "products:write"
+  | "costing:read"
+  | "costing:write"
+  | "samples:read"
+  | "samples:write"
+  | "approvals:read"
+  | "approvals:write"
   | "readiness:read"
   | "readiness:run"
   | "settings:read"
@@ -18,7 +24,13 @@ export type AppPermission =
 export const ROLE_PERMISSIONS: Record<AppRole, readonly AppPermission[]> = {
   owner: [
     "products:read",
-    "products:updateLocalState",
+    "products:write",
+    "costing:read",
+    "costing:write",
+    "samples:read",
+    "samples:write",
+    "approvals:read",
+    "approvals:write",
     "readiness:read",
     "readiness:run",
     "settings:read",
@@ -26,12 +38,25 @@ export const ROLE_PERMISSIONS: Record<AppRole, readonly AppPermission[]> = {
   ],
   editor: [
     "products:read",
-    "products:updateLocalState",
+    "products:write",
+    "costing:read",
+    "costing:write",
+    "samples:read",
+    "samples:write",
+    "approvals:read",
+    "approvals:write",
     "readiness:read",
     "readiness:run",
     "settings:read",
   ],
-  viewer: ["products:read", "readiness:read", "settings:read"],
+  viewer: [
+    "products:read",
+    "costing:read",
+    "samples:read",
+    "approvals:read",
+    "readiness:read",
+    "settings:read",
+  ],
 };
 
 export function hasPermission(

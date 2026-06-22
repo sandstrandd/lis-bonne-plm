@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductStatus {
+  DRAFT
+  NEEDS_CONTENT
+  READY_FOR_REVIEW
+  APPROVED
+  BLOCKED
+  ARCHIVED
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?
+  emailVerified Boolean?
+}
+
+model Product {
+  id               String           @id @default(cuid())
+  shop             String
+  shopifyProductId String?
+  handle           String?
+  title            String
+  descriptionHtml  String?
+  vendor           String?
+  productType      String?
+  status           ProductStatus    @default(DRAFT)
+  readinessScore   Int              @default(0)
+  readinessIssues  String?
+  lastReadinessAt  DateTime?
+  importedAt       DateTime?
+  approvedAt       DateTime?
+  approvedBy       String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  variants         ProductVariant[]
+  media            ProductMedia[]
+
+  @@unique([shop, shopifyProductId])
+  @@index([shop, status])
+  @@index([shop, handle])
+}
+
+model ProductVariant {
+  id                      String   @id @default(cuid())
+  productId               String
+  shopifyVariantId        String?
+  sku                     String?
+  title                   String?
+  priceCents              Int?
+  compareAtPriceCents     Int?
+  currencyCode            String   @default("USD")
+  inventoryQuantity       Int?
+  requiresShipping        Boolean  @default(true)
+  position                Int      @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  product                 Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@unique([productId, shopifyVariantId])
+}
+
+model ProductMedia {
+  id             String   @id @default(cuid())
+  productId      String
+  shopifyMediaId String?
+  mediaType      String?
+  url            String
+  alt            String?
+  position       Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@unique([productId, shopifyMediaId])
+}

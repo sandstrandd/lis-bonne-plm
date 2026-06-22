@@ -1,60 +1,72 @@
-export const PRODUCT_STATUSES = [
-  "DRAFT",
-  "NEEDS_CONTENT",
-  "READY_FOR_REVIEW",
-  "APPROVED",
-  "BLOCKED",
-  "ARCHIVED",
+export const PRODUCT_DEVELOPMENT_STATUSES = [
+  "IDEA",
+  "IN_DEVELOPMENT",
+  "REVIEW",
+  "APPROVED_FOR_LAUNCH",
+  "SYNCED_TO_SHOPIFY",
+  "DROPPED",
 ] as const;
 
-export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
+export type ProductDevelopmentStatus =
+  (typeof PRODUCT_DEVELOPMENT_STATUSES)[number];
 
-export const DEFAULT_PRODUCT_STATUS: ProductStatus = "DRAFT";
+export const DEFAULT_PRODUCT_DEVELOPMENT_STATUS: ProductDevelopmentStatus =
+  "IDEA";
 
-export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
-  DRAFT: "Draft",
-  NEEDS_CONTENT: "Needs content",
-  READY_FOR_REVIEW: "Ready for review",
-  APPROVED: "Approved",
-  BLOCKED: "Blocked",
-  ARCHIVED: "Archived",
+export const PRODUCT_DEVELOPMENT_STATUS_LABELS: Record<
+  ProductDevelopmentStatus,
+  string
+> = {
+  IDEA: "Idea",
+  IN_DEVELOPMENT: "In development",
+  REVIEW: "Review",
+  APPROVED_FOR_LAUNCH: "Approved for launch",
+  SYNCED_TO_SHOPIFY: "Shopify draft created",
+  DROPPED: "Dropped",
 };
 
-export const ACTIVE_PRODUCT_STATUSES: readonly ProductStatus[] = [
-  "DRAFT",
-  "NEEDS_CONTENT",
-  "READY_FOR_REVIEW",
-  "APPROVED",
-  "BLOCKED",
+export const ACTIVE_PRODUCT_DEVELOPMENT_STATUSES: readonly ProductDevelopmentStatus[] = [
+  "IDEA",
+  "IN_DEVELOPMENT",
+  "REVIEW",
+  "APPROVED_FOR_LAUNCH",
 ] as const;
 
-export const REVIEWABLE_PRODUCT_STATUSES: readonly ProductStatus[] = [
-  "READY_FOR_REVIEW",
-  "APPROVED",
+export const REVIEWABLE_PRODUCT_DEVELOPMENT_STATUSES: readonly ProductDevelopmentStatus[] = [
+  "REVIEW",
+  "APPROVED_FOR_LAUNCH",
 ] as const;
 
-export function isProductStatus(value: unknown): value is ProductStatus {
+export function isProductDevelopmentStatus(
+  value: unknown,
+): value is ProductDevelopmentStatus {
   return (
     typeof value === "string" &&
-    PRODUCT_STATUSES.includes(value as ProductStatus)
+    PRODUCT_DEVELOPMENT_STATUSES.includes(value as ProductDevelopmentStatus)
   );
 }
 
-export function parseProductStatus(
+export function parseProductDevelopmentStatus(
   value: unknown,
-  fallback: ProductStatus = DEFAULT_PRODUCT_STATUS,
-): ProductStatus {
-  return isProductStatus(value) ? value : fallback;
+  fallback: ProductDevelopmentStatus = DEFAULT_PRODUCT_DEVELOPMENT_STATUS,
+): ProductDevelopmentStatus {
+  return isProductDevelopmentStatus(value) ? value : fallback;
 }
 
-export function isActiveProductStatus(status: ProductStatus): boolean {
-  return ACTIVE_PRODUCT_STATUSES.includes(status);
+export function isActiveProductDevelopmentStatus(
+  status: ProductDevelopmentStatus,
+): boolean {
+  return ACTIVE_PRODUCT_DEVELOPMENT_STATUSES.includes(status);
 }
 
-export function isReviewableProductStatus(status: ProductStatus): boolean {
-  return REVIEWABLE_PRODUCT_STATUSES.includes(status);
+export function isReviewableProductDevelopmentStatus(
+  status: ProductDevelopmentStatus,
+): boolean {
+  return REVIEWABLE_PRODUCT_DEVELOPMENT_STATUSES.includes(status);
 }
 
-export function statusNeedsAttention(status: ProductStatus): boolean {
-  return status === "NEEDS_CONTENT" || status === "BLOCKED";
+export function statusNeedsDevelopment(
+  status: ProductDevelopmentStatus,
+): boolean {
+  return status === "IDEA" || status === "IN_DEVELOPMENT";
 }
